@@ -1,3 +1,5 @@
+const path = require("path");
+
 const rules = [
   {
     test: /\.js$/,
@@ -21,10 +23,10 @@ const rules = [
 
 module.exports = {
   mode: "development",
-  entry: "src/js/index.js",
+  entry: "./src/js/index.js",
   output: {
     filename: "bundle.js",
-    publicPath: "static",
+    path: path.resolve(__dirname, "static"),
   },
   module: { rules },
 };
