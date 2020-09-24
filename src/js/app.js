@@ -85,20 +85,36 @@ const getAsyncProcesses = () =>
         )
     );
 
+const processesReducer = (state, action) => {
+    switch (action.type) {
+        case "SET_PROCESSES":
+            return action.payload;
+        default:
+            throw new Error();
+    }
+};
+
 const App = () => {
     const [filterTerm, setFilterTerm] = useSemiPersistentState("filter", "");
-    const [processList, setProcesssList] = React.useState([]);
+    // const [processList, setProcesssList] = React.useState([]);
     const [isLoading, setIsLoading] = React.useState(false);
     const [isError, setIsError] = React.useState(false);
 
-    const filteredProcesses = processList.filter((item) =>
+    const [processes, dispatchProcesses] = React.useReducer(
+        processesReducer,
+        []
+    );
+    const filteredProcesses = processes.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
     );
     React.useEffect(() => {
         setIsLoading(true);
         getAsyncProcesses()
             .then((result) => {
-                setProcesssList(result.data.processes);
+                dispatchProcesses({
+                    type: "SET_PROCESSES",
+                    payload: result.data.processes,
+                });
                 setIsLoading(false);
             })
             .catch(() => setIsError(true));
