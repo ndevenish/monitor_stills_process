@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "first_flask"
+name = "monitor_stills_process"
 version = "0.1.0"
 description = ""
 authors = ["Nicholas Devenish <ndevenish@gmail.com>"]
