@@ -47,12 +47,25 @@ const Process = ({ item }) => (
     </tr>
 );
 
-const Filter = ({ filter, onFilter }) => (
-    <>
-        <label htmlFor="filter">Filter: </label>
-        <input id="filter" type="text" onChange={onFilter} value={filter} />
-    </>
-);
+const Filter = ({ filter, onFilter }) => {
+    const setFilter = (item) => onFilter(item.target.value);
+    const clearFilter = () => onFilter("");
+
+    return (
+        <>
+            <label htmlFor="filter">Filter: </label>
+            <input
+                id="filter"
+                type="text"
+                onChange={setFilter}
+                value={filter}
+            />
+            <button type="button" onClick={clearFilter}>
+                x
+            </button>
+        </>
+    );
+};
 
 // React state variable persisted in localStorage
 const useSemiPersistentState = (key, initialState) => {
@@ -66,17 +79,15 @@ const useSemiPersistentState = (key, initialState) => {
 
 const App = () => {
     const [filterTerm, setFilterTerm] = useSemiPersistentState("filter", "");
-    const handleFilter = (event) => {
-        setFilterTerm(event.target.value);
-    };
     const filteredProcesses = data.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
     );
+    const onReset = () => setFilterTerm("");
 
     return (
         <div>
             <h1>Processing Results</h1>
-            <Filter onFilter={handleFilter} filter={filterTerm} />
+            <Filter onFilter={setFilterTerm} filter={filterTerm} />
             <Table processes={filteredProcesses} />
         </div>
     );
