@@ -1,5 +1,4 @@
 import React from "react";
-import example_processes from "./data";
 
 const API_ENDPOINT = "http://localhost:5000/api";
 
@@ -79,14 +78,6 @@ const useSemiPersistentState = (key, initialState) => {
     return [value, setValue];
 };
 
-const getAsyncProcesses = () =>
-    new Promise((resolve) =>
-        setTimeout(
-            () => resolve({ data: { processes: example_processes } }),
-            2000
-        )
-    );
-
 const processesReducer = (state, action) => {
     switch (action.type) {
         case "SET_PROCESSES":
@@ -133,10 +124,13 @@ const App = () => {
             .then((result) => {
                 dispatchProcesses({
                     type: "FETCH_SUCCESS",
-                    payload: result.data.processes,
+                    payload: result,
                 });
             })
-            .catch(() => dispatchProcesses({ type: "FETCH_FAILURE" }));
+            .catch((error) => {
+                dispatchProcesses({ type: "FETCH_FAILURE" });
+                throw error;
+            });
     }, []);
     return (
         <div>
