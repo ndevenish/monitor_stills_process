@@ -117,7 +117,8 @@ const App = () => {
     const filteredProcesses = processes.data.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
     );
-    React.useEffect(() => {
+
+    const fetchData = () => {
         dispatchProcesses({ type: "FETCH_INIT" });
         fetch(API_ENDPOINT)
             .then((response) => response.json())
@@ -131,13 +132,18 @@ const App = () => {
                 dispatchProcesses({ type: "FETCH_FAILURE" });
                 throw error;
             });
+    };
+
+    React.useEffect(() => {
+        fetchData();
+        setInterval(fetchData, 2000);
     }, []);
     return (
         <div>
             <h1>Processing Results</h1>
             <Filter onFilter={setFilterTerm} filter={filterTerm} />
-            {processes.isLoading && <span> Loading...</span>}
-            {processes.isError && <p>Something went wrong...</p>}
+            {/* {processes.isLoading && <span> Loading...</span>} */}
+            {processes.isError && <p>Error: Error fetching new data</p>}
             <Table processes={filteredProcesses} />
         </div>
     );
