@@ -3,14 +3,17 @@ import json
 from copy import deepcopy
 from pathlib import Path
 
-from flask import Flask
+from flask import Flask, send_file
 from flask_cors import CORS
 
 __version__ = "0.1.0"
 
 
 def create_app(test_config=None):
-    app = Flask(__name__)
+    # Find the static folder
+    static_folder = Path(__file__).parent.parent.parent / "static"
+    print(static_folder)
+    app = Flask(__name__, static_url_path="", static_folder=str(static_folder))
     CORS(app)
 
     if test_config is not None:
@@ -19,6 +22,10 @@ def create_app(test_config=None):
     raw_example_data = json.loads(
         (Path(__file__).parent / "example_data.json").read_bytes()
     )
+
+    @app.route("/")
+    def index():
+        return send_file(static_folder / "index.html")
 
     @app.route("/api")
     def return_process_list():
