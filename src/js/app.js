@@ -1,5 +1,5 @@
 import React from "react";
-import data from "./data";
+import example_processes from "./data";
 
 const Table = (props) => {
     // Track the totals
@@ -79,7 +79,8 @@ const useSemiPersistentState = (key, initialState) => {
 
 const App = () => {
     const [filterTerm, setFilterTerm] = useSemiPersistentState("filter", "");
-    const filteredProcesses = data.filter((item) =>
+    const [processList, setProcesssList] = React.useState(example_processes);
+    const filteredProcesses = processList.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
     );
     const onReset = () => setFilterTerm("");
