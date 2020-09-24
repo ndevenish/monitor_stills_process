@@ -57,7 +57,7 @@ const App = () => {
         setFilterTerm(event.target.value);
     };
     const filteredProcesses = data.filter((item) =>
-        item.name.includes(filterTerm)
+        item.name.includes(filterTerm.toLowerCase())
     );
 
     return (
