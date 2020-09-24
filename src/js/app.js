@@ -47,7 +47,12 @@ const Table = (props) => {
 const Filter = (props) => (
     <div>
         <label htmlFor="filter">Filter: </label>
-        <input id="filter" type="text" onChange={props.onFilter} />
+        <input
+            id="filter"
+            type="text"
+            onChange={props.onFilter}
+            value={props.filter}
+        />
     </div>
 );
 const App = () => {
@@ -63,7 +68,7 @@ const App = () => {
     return (
         <div>
             <h1>Processing Results</h1>
-            <Filter onFilter={handleFilter} />
+            <Filter onFilter={handleFilter} filter={filterTerm} />
             <Table processes={filteredProcesses} />
         </div>
     );
