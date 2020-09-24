@@ -2,6 +2,8 @@ import React from "react";
 
 const API_ENDPOINT = "http://localhost:5000/api";
 
+const processPercent = (a, b) => ((100 * a) / b).toFixed(0);
+
 const Table = (props) => {
     // Track the totals
     let processed = 0,
@@ -15,8 +17,8 @@ const Table = (props) => {
                     <tr>
                         <th align="left">Name</th>
                         <th>Processed</th>
-                        <th>Indexed</th>
-                        <th>Integrated</th>
+                        <th colSpan="2">Indexed</th>
+                        <th colSpan="2">Integrated</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -30,21 +32,34 @@ const Table = (props) => {
                 <tfoot>
                     <tr>
                         <th align="left">Totals:</th>
-                        <th align="right">{processed}</th>
-                        <th align="right">{indexed}</th>
-                        <th align="right">{integrated}</th>
+                        <th align="right">{processed.toLocaleString()}</th>
+                        <th align="right">{indexed.toLocaleString()}</th>
+                        <th align="left" className="percent">
+                            {processPercent(indexed, processed)}%
+                        </th>
+
+                        <th align="right">{integrated.toLocaleString()}</th>
+                        <th align="left" className="percent">
+                            {processPercent(integrated, processed)}%
+                        </th>
                     </tr>
                 </tfoot>
             </table>
         </div>
     );
 };
-const Process = ({ item }) => (
+const Process = ({ item: { name, processed, indexed, integrated } }) => (
     <tr>
-        <td>{item.name}</td>
-        <td align="right">{item.processed}</td>
-        <td align="right">{item.indexed}</td>
-        <td align="right">{item.integrated}</td>
+        <td>{name}</td>
+        <td align="right">{processed}</td>
+        <td align="right">{indexed}</td>
+        <td align="left" className="percent">
+            {processPercent(indexed, processed)}%
+        </td>
+        <td align="right">{integrated}</td>
+        <td align="left" className="percent">
+            {processPercent(integrated, processed)}%
+        </td>
     </tr>
 );
 
