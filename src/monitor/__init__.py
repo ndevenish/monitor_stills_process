@@ -23,7 +23,13 @@ def create_app(test_config=None):
     @app.route("/api")
     def return_process_list():
         data = deepcopy(raw_example_data)
-        fraction = datetime.datetime.now().second / 60
+        time = datetime.datetime.now()
+        fraction = (
+            time.minute / 60
+            + (time.second / 60 / 60)
+            + time.microsecond / 1e6 / 60 / 60
+        )
+        # fraction = time.second / 60 + ()
         for x in data:
             for col in ["integrated", "indexed", "processed"]:
                 x[col] = int(x[col] * fraction)
