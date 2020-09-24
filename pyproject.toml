@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "monitor_stills_process"
+name = "monitor"
 version = "0.1.0"
 description = ""
 authors = ["Nicholas Devenish <ndevenish@gmail.com>"]
