@@ -140,3 +140,5 @@ cython_debug/
 .vscode/
 
 node_modules/
+static/bundle.js
+
