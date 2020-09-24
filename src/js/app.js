@@ -44,31 +44,27 @@ const Table = (props) => {
     );
 };
 
-const Filter = (props) => {
+const Filter = (props) => (
+    <div>
+        <label htmlFor="filter">Filter: </label>
+        <input id="filter" type="text" onChange={props.onFilter} />
+    </div>
+);
+const App = () => {
     const [filterTerm, setFilterTerm] = React.useState("");
 
-    const handleChange = (event) => {
-        console.log(event.target.value);
-        setFilterTerm(event.target.value);
-        props.onFilter(event);
-    };
-    return (
-        <div>
-            <label htmlFor="filter">Filter: </label>
-            <input id="filter" type="text" onChange={handleChange} />
-            {filterTerm.length > 0 && <p>Filtered for {filterTerm}</p>}
-        </div>
-    );
-};
-const App = () => {
     const handleFilter = (event) => {
-        console.log(`Got passed up filter ${event}`);
+        setFilterTerm(event.target.value);
     };
+    const filteredProcesses = data.filter((item) =>
+        item.name.includes(filterTerm)
+    );
+
     return (
         <div>
             <h1>Processing Results</h1>
             <Filter onFilter={handleFilter} />
-            <Table processes={data} filter="{filterterm}" />
+            <Table processes={filteredProcesses} />
         </div>
     );
 };
