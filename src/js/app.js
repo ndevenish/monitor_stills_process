@@ -44,12 +44,13 @@ const Table = (props) => {
     );
 };
 
-const Filter = () => {
+const Filter = (props) => {
     const [filterTerm, setFilterTerm] = React.useState("");
 
     const handleChange = (event) => {
         console.log(event.target.value);
         setFilterTerm(event.target.value);
+        props.onFilter(event);
     };
     return (
         <div>
@@ -60,10 +61,13 @@ const Filter = () => {
     );
 };
 const App = () => {
+    const handleFilter = (event) => {
+        console.log(`Got passed up filter ${event}`);
+    };
     return (
         <div>
             <h1>Processing Results</h1>
-            <Filter />
+            <Filter onFilter={handleFilter} />
             <Table processes={data} filter="{filterterm}" />
         </div>
     );
