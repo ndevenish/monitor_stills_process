@@ -53,15 +53,17 @@ const Filter = ({ filter, onFilter }) => (
         <input id="filter" type="text" onChange={onFilter} value={filter} />
     </div>
 );
+
+// React state variable persisted in localStorage
+const useSemiPersistentState = (key) => {
+    const [value, setValue] = React.useState(localStorage.getItem(key) || "");
+    React.useEffect(() => localStorage.setItem(key, value), [value, key]);
+
+    return [value, setValue];
+};
+
 const App = () => {
-    const [filterTerm, setFilterTerm] = React.useState(
-        localStorage.getItem("filter") || ""
-    );
-
-    React.useEffect(() => localStorage.setItem("filter", filterTerm), [
-        filterTerm,
-    ]);
-
+    const [filterTerm, setFilterTerm] = useSemiPersistentState("filter");
     const handleFilter = (event) => {
         setFilterTerm(event.target.value);
     };
