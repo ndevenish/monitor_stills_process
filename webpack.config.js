@@ -29,4 +29,7 @@ module.exports = {
     path: path.resolve(__dirname, "static"),
   },
   module: { rules },
+  devServer: {
+    contentBase: path.join(__dirname, "static"),
+  },
 };
