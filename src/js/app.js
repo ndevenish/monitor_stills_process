@@ -86,7 +86,7 @@ const processesReducer = (state, action) => {
             return {
                 ...state,
                 isLoading: true,
-                isError: false,
+                isError: state.isError,
             };
         case "FETCH_SUCCESS":
             return {
