@@ -2,9 +2,11 @@ import React from "react";
 import data from "./data";
 
 const Table = (props) => {
+    // Track the totals
     let processed = 0,
         indexed = 0,
         integrated = 0;
+
     return (
         <div>
             <table>
@@ -21,14 +23,7 @@ const Table = (props) => {
                         processed += item.processed;
                         indexed += item.indexed;
                         integrated += item.integrated;
-                        return (
-                            <tr key={item.name}>
-                                <td>{item.name}</td>
-                                <td align="right">{item.processed}</td>
-                                <td align="right">{item.indexed}</td>
-                                <td align="right">{item.integrated}</td>
-                            </tr>
-                        );
+                        return <Process key={item.name} item={item} />;
                     })}
                 </tbody>
                 <tfoot>
@@ -43,16 +38,19 @@ const Table = (props) => {
         </div>
     );
 };
+const Process = ({ item }) => (
+    <tr>
+        <td>{item.name}</td>
+        <td align="right">{item.processed}</td>
+        <td align="right">{item.indexed}</td>
+        <td align="right">{item.integrated}</td>
+    </tr>
+);
 
-const Filter = (props) => (
+const Filter = ({ filter, onFilter }) => (
     <div>
         <label htmlFor="filter">Filter: </label>
-        <input
-            id="filter"
-            type="text"
-            onChange={props.onFilter}
-            value={props.filter}
-        />
+        <input id="filter" type="text" onChange={onFilter} value={filter} />
     </div>
 );
 const App = () => {
