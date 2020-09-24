@@ -77,13 +77,20 @@ const useSemiPersistentState = (key, initialState) => {
     return [value, setValue];
 };
 
+const getAsyncProcesses = () =>
+    Promise.resolve({ data: { processes: example_processes } });
+
 const App = () => {
     const [filterTerm, setFilterTerm] = useSemiPersistentState("filter", "");
-    const [processList, setProcesssList] = React.useState(example_processes);
+    const [processList, setProcesssList] = React.useState([]);
     const filteredProcesses = processList.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
     );
-
+    React.useEffect(() => {
+        getAsyncProcesses().then((result) =>
+            setProcesssList(result.data.processes)
+        );
+    }, []);
     return (
         <div>
             <h1>Processing Results</h1>
