@@ -83,7 +83,6 @@ const App = () => {
     const filteredProcesses = processList.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
     );
-    const onReset = () => setFilterTerm("");
 
     return (
         <div>
