@@ -12,7 +12,7 @@ const Table = (props) => {
             <table>
                 <thead>
                     <tr>
-                        <th>Name</th>
+                        <th align="left">Name</th>
                         <th>Processed</th>
                         <th>Indexed</th>
                         <th>Integrated</th>
@@ -54,10 +54,13 @@ const Filter = ({ filter, onFilter }) => (
     </div>
 );
 const App = () => {
-    const [filterTerm, setFilterTerm] = React.useState("");
+    const [filterTerm, setFilterTerm] = React.useState(
+        localStorage.getItem("filter") || ""
+    );
 
     const handleFilter = (event) => {
         setFilterTerm(event.target.value);
+        localStorage.setItem("filter", event.target.value);
     };
     const filteredProcesses = data.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
