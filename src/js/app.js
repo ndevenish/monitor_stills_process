@@ -48,10 +48,10 @@ const Process = ({ item }) => (
 );
 
 const Filter = ({ filter, onFilter }) => (
-    <div>
+    <>
         <label htmlFor="filter">Filter: </label>
         <input id="filter" type="text" onChange={onFilter} value={filter} />
-    </div>
+    </>
 );
 
 // React state variable persisted in localStorage
