@@ -5,13 +5,8 @@ const Table = (props) => {
     let processed = 0,
         indexed = 0,
         integrated = 0;
-    const handleChange = (event) => {
-        console.log(event.target.value);
-    };
     return (
         <div>
-            <label htmlFor="filter">Filter: </label>
-            <input id="filter" type="text" onChange={handleChange} />
             <table>
                 <thead>
                     <tr>
@@ -49,11 +44,29 @@ const Table = (props) => {
     );
 };
 
-const App = () => (
-    <div>
-        <h1>Processing Results</h1>
-        <Table processes={data} />
-    </div>
-);
+const Filter = () => {
+    const [filterTerm, setFilterTerm] = React.useState("");
+
+    const handleChange = (event) => {
+        console.log(event.target.value);
+        setFilterTerm(event.target.value);
+    };
+    return (
+        <div>
+            <label htmlFor="filter">Filter: </label>
+            <input id="filter" type="text" onChange={handleChange} />
+            {filterTerm.length > 0 && <p>Filtered for {filterTerm}</p>}
+        </div>
+    );
+};
+const App = () => {
+    return (
+        <div>
+            <h1>Processing Results</h1>
+            <Filter />
+            <Table processes={data} filter="{filterterm}" />
+        </div>
+    );
+};
 
 export default App;
