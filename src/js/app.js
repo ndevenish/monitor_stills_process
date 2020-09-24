@@ -89,6 +89,25 @@ const processesReducer = (state, action) => {
     switch (action.type) {
         case "SET_PROCESSES":
             return action.payload;
+        case "FETCH_INIT":
+            return {
+                ...state,
+                isLoading: true,
+                isError: false,
+            };
+        case "FETCH_SUCCESS":
+            return {
+                ...state,
+                isLoading: false,
+                isError: false,
+                data: action.payload,
+            };
+        case "FETCH_FAILURE":
+            return {
+                ...state,
+                isLoading: false,
+                isError: true,
+            };
         default:
             throw new Error();
     }
@@ -96,35 +115,32 @@ const processesReducer = (state, action) => {
 
 const App = () => {
     const [filterTerm, setFilterTerm] = useSemiPersistentState("filter", "");
-    // const [processList, setProcesssList] = React.useState([]);
-    const [isLoading, setIsLoading] = React.useState(false);
-    const [isError, setIsError] = React.useState(false);
 
-    const [processes, dispatchProcesses] = React.useReducer(
-        processesReducer,
-        []
-    );
-    const filteredProcesses = processes.filter((item) =>
+    const [processes, dispatchProcesses] = React.useReducer(processesReducer, {
+        data: [],
+        isLoading: false,
+        isError: false,
+    });
+    const filteredProcesses = processes.data.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
     );
     React.useEffect(() => {
-        setIsLoading(true);
+        dispatchProcesses({ type: "FETCH_INIT" });
         getAsyncProcesses()
             .then((result) => {
                 dispatchProcesses({
-                    type: "SET_PROCESSES",
+                    type: "FETCH_SUCCESS",
                     payload: result.data.processes,
                 });
-                setIsLoading(false);
             })
-            .catch(() => setIsError(true));
+            .catch(() => dispatchProcesses({ type: "FETCH_FAILURE" }));
     }, []);
     return (
         <div>
             <h1>Processing Results</h1>
             <Filter onFilter={setFilterTerm} filter={filterTerm} />
-            {isLoading && <span> Loading...</span>}
-            {isError && <p>Something went wrong...</p>}
+            {processes.isLoading && <span> Loading...</span>}
+            {processes.isError && <p>Something went wrong...</p>}
             <Table processes={filteredProcesses} />
         </div>
     );
