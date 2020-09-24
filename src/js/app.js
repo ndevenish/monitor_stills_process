@@ -1,6 +1,8 @@
 import React from "react";
 import example_processes from "./data";
 
+const API_ENDPOINT = "http://localhost:5000/api";
+
 const Table = (props) => {
     // Track the totals
     let processed = 0,
@@ -126,7 +128,8 @@ const App = () => {
     );
     React.useEffect(() => {
         dispatchProcesses({ type: "FETCH_INIT" });
-        getAsyncProcesses()
+        fetch(API_ENDPOINT)
+            .then((response) => response.json())
             .then((result) => {
                 dispatchProcesses({
                     type: "FETCH_SUCCESS",
