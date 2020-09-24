@@ -627,10 +627,13 @@ const Table = () => {
     let processed = 0,
         indexed = 0,
         integrated = 0;
+    const handleChange = (event) => {
+        console.log(event.target.value);
+    };
     return (
         <div>
             <label htmlFor="filter">Filter: </label>
-            <input id="filter" type="text" />
+            <input id="filter" type="text" onChange={handleChange} />
             <table>
                 <thead>
                     <tr>
