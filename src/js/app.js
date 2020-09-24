@@ -58,9 +58,12 @@ const App = () => {
         localStorage.getItem("filter") || ""
     );
 
+    React.useEffect(() => localStorage.setItem("filter", filterTerm), [
+        filterTerm,
+    ]);
+
     const handleFilter = (event) => {
         setFilterTerm(event.target.value);
-        localStorage.setItem("filter", event.target.value);
     };
     const filteredProcesses = data.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
