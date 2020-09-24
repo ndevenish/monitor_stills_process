@@ -78,23 +78,33 @@ const useSemiPersistentState = (key, initialState) => {
 };
 
 const getAsyncProcesses = () =>
-    Promise.resolve({ data: { processes: example_processes } });
+    new Promise((resolve) =>
+        setTimeout(
+            () => resolve({ data: { processes: example_processes } }),
+            2000
+        )
+    );
 
 const App = () => {
     const [filterTerm, setFilterTerm] = useSemiPersistentState("filter", "");
     const [processList, setProcesssList] = React.useState([]);
+    const [isLoading, setIsLoading] = React.useState(false);
+
     const filteredProcesses = processList.filter((item) =>
         item.name.includes(filterTerm.toLowerCase())
     );
     React.useEffect(() => {
-        getAsyncProcesses().then((result) =>
-            setProcesssList(result.data.processes)
-        );
+        setIsLoading(true);
+        getAsyncProcesses().then((result) => {
+            setProcesssList(result.data.processes);
+            setIsLoading(false);
+        });
     }, []);
     return (
         <div>
             <h1>Processing Results</h1>
             <Filter onFilter={setFilterTerm} filter={filterTerm} />
+            {isLoading && <span> Loading...</span>}
             <Table processes={filteredProcesses} />
         </div>
     );
