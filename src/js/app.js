@@ -1,11 +1,30 @@
 import React from "react";
-import "./app.css";
+import "./app.scss";
 
 const API_ENDPOINT = "http://localhost:5000/api";
 
 const processPercent = (a, b) => ((100 * a) / b).toFixed(0);
 
-const NestedNameField = ({ value }) => <span>{value}</span>;
+const NestedNameField = ({ value }) => {
+    const parts = value.split("/").reverse();
+    if (parts.length == 1) {
+        return (
+            <div className="pathContainer">
+                <span>{value}</span>
+            </div>
+        );
+    }
+    return (
+        <div className="pathContainer">
+            <div className="pathSelector">
+                {parts.slice(1).map((x, i) => (
+                    <span key={i}>{x}/</span>
+                ))}
+            </div>
+            <span>{parts[0]}</span>
+        </div>
+    );
+};
 
 const Table = (props) => {
     // Track the totals
