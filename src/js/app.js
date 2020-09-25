@@ -5,8 +5,11 @@ const API_ENDPOINT = "http://localhost:5000/api";
 
 const processPercent = (a, b) => ((100 * a) / b).toFixed(0);
 
-const NestedNameField = ({ value }) => {
+const NestedNameField = ({ value, onFilter }) => {
     const parts = value.split("/").reverse();
+    const clickPart = (i, event) => {
+        onFilter(parts.slice(i).reverse().join("/") + "/");
+    };
     if (parts.length == 1) {
         return (
             <div className="pathContainer">
@@ -18,7 +21,9 @@ const NestedNameField = ({ value }) => {
         <div className="pathContainer">
             <div className="pathSelector">
                 {parts.slice(1).map((x, i) => (
-                    <span key={i}>{x}/</span>
+                    <span key={i} onClick={clickPart.bind(null, i + 1)}>
+                        {x}/
+                    </span>
                 ))}
             </div>
             <span>{parts[0]}</span>
@@ -48,7 +53,13 @@ const Table = (props) => {
                         processed += item.processed;
                         indexed += item.indexed;
                         integrated += item.integrated;
-                        return <Process key={item.name} item={item} />;
+                        return (
+                            <Process
+                                key={item.name}
+                                item={item}
+                                onFilter={props.onFilter}
+                            />
+                        );
                     })}
                 </tbody>
                 <tfoot>
@@ -70,10 +81,13 @@ const Table = (props) => {
         </div>
     );
 };
-const Process = ({ item: { name, processed, indexed, integrated } }) => (
+const Process = ({
+    item: { name, processed, indexed, integrated },
+    onFilter,
+}) => (
     <tr>
         <td>
-            <NestedNameField value={name} />
+            <NestedNameField value={name} onFilter={onFilter} />
         </td>
         <td align="right">{processed}</td>
         <td align="right">{indexed}</td>
@@ -153,9 +167,9 @@ const App = () => {
         isLoading: false,
         isError: false,
     });
-    const filteredProcesses = processes.data.filter((item) =>
-        item.name.includes(filterTerm.toLowerCase())
-    );
+    const filteredProcesses = processes.data.filter((item) => {
+        return item.name.toLowerCase().includes(filterTerm.toLowerCase());
+    });
 
     const fetchData = async () => {
         dispatchProcesses({ type: "FETCH_INIT" });
@@ -181,7 +195,7 @@ const App = () => {
             <Filter onFilter={setFilterTerm} filter={filterTerm} />
             {/* {processes.isLoading && <span> Loading...</span>} */}
             {processes.isError && <p>Error: Error fetching new data</p>}
-            <Table processes={filteredProcesses} />
+            <Table processes={filteredProcesses} onFilter={setFilterTerm} />
         </div>
     );
 };
