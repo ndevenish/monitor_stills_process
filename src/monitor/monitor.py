@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 import re
@@ -127,7 +128,11 @@ class PathScanner:
                 if (path / dirname) in known:
                     dirs.remove(dirname)
                 elif is_data_dir(files):
-                    self.known_paths.append(SinglePathWatcher(path, files))
+                    new_path = SinglePathWatcher(path, files)
+                    self.known_paths.append(new_path)
+                    logger.debug(
+                        "Found new data path %s with %s", path, new_path.counts
+                    )
                     change = True
             # Check if we've taken too long and pause
             if time_limit and time.monotonic() - entry_time > time_limit:
@@ -138,7 +143,7 @@ class PathScanner:
 
         # We're done with this walker
         logger.debug(
-            "New path complete. Total time including waits: %s seconds",
+            "Scan for new paths complete. Total time including waits: %s seconds",
             time.monotonic() - start_time,
         )
         self._walker = None
@@ -208,12 +213,25 @@ class PathScanner:
         """
 
         try:
-            if not self._current_scan:
+            if self._current_scan:
+                logger.debug("Resuming previous scan")
+                return self._current_scan.send(time_limit)
+            else:
+                logger.debug("Starting new scan")
                 self._current_scan = self._scan(time_limit)
                 return next(self._current_scan)
-            else:
-                return self._current_scan.send(time_limit)
         except StopIteration as result:
             # Finished scan, so clear
             self._current_scan = None
             return result.value
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Monitor for updates in a folder tree")
+    # parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    parser.add_argument("path", help="The path to scan", type=Path)
+    options = parser.parse_args()
+    logging.basicConfig(level=logging.DEBUG)
+
+    scanner = PathScanner(options.path.resolve())
+    scanner.scan()
