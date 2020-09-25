@@ -22,11 +22,13 @@
         "babel-loader": "^8.1.0",
         "webpack": "^4.44.2",
         "webpack-cli": "^3.3.12",
-        "webpack-dev-server": "^3.11.0"
+        "webpack-dev-server": "^3.11.0",
+        "core-js": "^3.6.5"
     },
     "dependencies": {
         "react": "^16.13.1",
-        "react-dom": "^16.13.1"
+        "react-dom": "^16.13.1",
+        "regenerator-runtime": "^0.13.7"
     },
     "prettier": {
         "tabWidth": 4

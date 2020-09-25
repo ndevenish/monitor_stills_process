@@ -137,20 +137,18 @@ const App = () => {
         item.name.includes(filterTerm.toLowerCase())
     );
 
-    const fetchData = () => {
+    const fetchData = async () => {
         dispatchProcesses({ type: "FETCH_INIT" });
-        fetch(API_ENDPOINT)
-            .then((response) => response.json())
-            .then((result) => {
-                dispatchProcesses({
-                    type: "FETCH_SUCCESS",
-                    payload: result,
-                });
-            })
-            .catch((error) => {
-                dispatchProcesses({ type: "FETCH_FAILURE" });
-                throw error;
+        try {
+            const result = await fetch(API_ENDPOINT);
+            dispatchProcesses({
+                type: "FETCH_SUCCESS",
+                payload: await result.json(),
             });
+        } catch (error) {
+            dispatchProcesses({ type: "FETCH_FAILURE" });
+            throw error;
+        }
     };
 
     React.useEffect(() => {
