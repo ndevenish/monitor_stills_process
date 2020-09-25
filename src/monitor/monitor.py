@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Generator, Iterable, List, NamedTuple, Optional, Union
 
 logger = logging.getLogger(__name__)
+ScanGenerator = Generator[bool, Optional[float], bool]
 
 # Regex to identify integrated files
 reInt = re.compile(r"int.*\.pickle")
@@ -54,10 +55,13 @@ class SinglePathWatcher:
         start_time = time.monotonic()
         new_count = count_folder(self.path)
         self.last_duration = time.monotonic() - start_time
+        self.last_checked = time.monotonic()
+
         if new_count != self.counts:
             self.counts = new_count
             self.last_update = time.monotonic()
-        self.last_checked = time.monotonic()
+            return True
+        return False
 
     def to_dict(self, relative_to: Path):
         """Generate a dictionary description of the path.
@@ -85,13 +89,11 @@ class PathScanner:
     def __init__(self, root: Path):
         self.root = root.resolve()
         self.known_paths: List[SinglePathWatcher] = []
-        self._updating_paths = None
-        self._updating_paths_start_time: float = 0.0
-        self._paths_to_update: Optional[List[SinglePathWatcher]] = None
+        self._current_scan: Optional[ScanGenerator] = None
 
     def _scan_for_new_paths(
         self, time_limit: Optional[float] = None, start_time: Optional[float] = None
-    ) -> Generator:
+    ) -> ScanGenerator:
         """
         Walk the scan tree looking for new stills process paths.
 
@@ -105,7 +107,7 @@ class PathScanner:
                 have all of the time_limit to initially run.
 
         Returns:
-            yields until the routine is completed.
+            yields a bool - True if something changed - until the routine is completed
         """
 
         start_time = start_time or time.monotonic()
@@ -113,6 +115,9 @@ class PathScanner:
         entry_time = start_time
 
         known = [x.path for x in self.known_paths]
+
+        # Track whether we updated anything this time
+        change = False
 
         # Although os.walk might be slower, we use it here because we need
         # to check every folder for subfolders at least once
@@ -123,10 +128,12 @@ class PathScanner:
                     dirs.remove(dirname)
                 elif is_data_dir(files):
                     self.known_paths.append(SinglePathWatcher(path, files))
+                    change = True
             # Check if we've taken too long and pause
             if time_limit and time.monotonic() - entry_time > time_limit:
                 logger.debug("Reached walking time limit of %s, pausing", time_limit)
-                time_limit = yield
+                time_limit = yield change
+                change = False
                 entry_time = time.monotonic()
 
         # We're done with this walker
@@ -135,35 +142,78 @@ class PathScanner:
             time.monotonic() - start_time,
         )
         self._walker = None
+        return change
 
-    def scan(self, time_limit: float = None):
+    def _scan(self, time_limit: float = None, start_time: float = 0) -> ScanGenerator:
         """
         Run scans over the known folders and look for new ones.
 
         Args:
             time_limit: Don't spend much longer than this searching at once
         """
-        start_time = time.monotonic()
+        start_time = start_time or time.monotonic()
+        entry_time = start_time
+
         # Check for resume or new scan
-        if not self._paths_to_update:
-            # Generate the list of known paths up front. Look at oldest first.
-            self._paths_to_update = sorted(
-                self.known_paths, key=lambda x: start_time - x.last_update
-            )
-            self._updating_paths_start_time = start_time
-        # Run the scans until we run out of time
-        while self._paths_to_update:
-            self._paths_to_update.pop(0).scan()
-            if time_limit and time.monotonic() - start_time > time_limit:
-                logger.debug("Reached scan time limit during path update")
-                return
-        logger.debug(
-            "Single path updating done in %s",
-            time.monotonic() - self._updating_paths_start_time,
-        )
-        # Now, scan for new paths in the time remaining
-        yield from self._scan_for_new_paths(
-            time_limit=time_limit, start_time=start_time
+        paths_to_update = sorted(
+            self.known_paths, key=lambda x: start_time - x.last_update
         )
 
+        change = False
+
+        # Run the scans until we run out of time
+        for path in paths_to_update:
+            change = change or path.scan()
+            if time_limit and time.monotonic() - entry_time > time_limit:
+                logger.debug("Reached scan time limit during path update")
+                time_limit = yield change
+                change = False
+                entry_time = time.monotonic()
+
+        logger.debug(
+            "Single path updating done in %s",
+            time.monotonic() - start_time,
+        )
+
+        path_scanner = self._scan_for_new_paths(
+            time_limit=time_limit, start_time=start_time
+        )
+        # If something changed here, then we need to mix the signal in
+        # with the first/only return value from the sub-generator
+        try:
+            if change:
+                # Whatever the path scanner finds, we know a change happened
+                next(path_scanner)
+                yield True
+        except StopIteration as result:
+            change = result.value
+        else:
+            # Now we solved the first change mixer, can just return everything
+            change = yield from path_scanner
+
         logger.debug("Scan completed.")
+        return change
+
+    def scan(self, time_limit: float = None) -> bool:
+        """Start or continue a scan with a time limit.
+
+        If the limit is reached, it will continue from the previous stop
+        point the next time it is called.
+
+        Args:
+            time_limit: The length to time to stop scanning after
+
+        Returns:
+            True if something changed this scan iteration
+        """
+
+        try:
+            if not self._current_scan:
+                self._current_scan = self._scan(time_limit)
+                return next(self._current_scan)
+            else:
+                return self._current_scan.send(time_limit)
+        except StopIteration as result:
+            # Finished scan, so clear
+            self._current_scan = None
+            return result.value
