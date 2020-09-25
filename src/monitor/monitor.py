@@ -125,17 +125,18 @@ class PathScanner:
         # to check every folder for subfolders at least once
         for (basepath, dirs, files) in os.walk(self.root):
             path = Path(basepath)
+            logger.debug("Checking \033[37m%s\033[0m", path)
+            checked_dircount += 1
+            # Remove subfolders from consideration
             for dirname in list(dirs):
-                checked_dircount += 1
                 if (path / dirname) in known:
                     dirs.remove(dirname)
-                elif is_data_dir(files):
-                    new_path = SinglePathWatcher(path, files)
-                    self.known_paths.append(new_path)
-                    logger.debug(
-                        "Found new data path %s with %s", path, new_path.counts
-                    )
-                    change = True
+            # Now check this folder
+            if is_data_dir(files):
+                new_path = SinglePathWatcher(path, files)
+                self.known_paths.append(new_path)
+                logger.debug("Found new data path %s with %s", path, new_path.counts)
+                change = True
             # Check if we've taken too long and pause
             if time_limit and time.monotonic() - entry_time > time_limit:
                 logger.debug("Reached walking time limit of %s, pausing", time_limit)
@@ -178,10 +179,11 @@ class PathScanner:
                 change = False
                 entry_time = time.monotonic()
 
-        logger.debug(
-            "Single path updating done in %.2f seconds",
-            time.monotonic() - start_time,
-        )
+        if paths_to_update:
+            logger.debug(
+                "Single path updating done in %.2f seconds",
+                time.monotonic() - start_time,
+            )
 
         path_scanner = self._scan_for_new_paths(
             time_limit=time_limit, start_time=start_time
