@@ -301,6 +301,6 @@ if __name__ == "__main__":
 
     scanner = PathScanner(options.path.resolve())
     while True:
-        scanner.scan(time_limit=5)
-        logger.debug("Waiting before rescan")
+        updated = scanner.scan(time_limit=5)
+        logger.debug("Waiting before rescan (updated: %s)", updated)
         time.sleep(5)
