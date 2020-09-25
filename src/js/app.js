@@ -4,6 +4,8 @@ const API_ENDPOINT = "http://localhost:5000/api";
 
 const processPercent = (a, b) => ((100 * a) / b).toFixed(0);
 
+const NestedNameField = ({ value }) => <span>{value}</span>;
+
 const Table = (props) => {
     // Track the totals
     let processed = 0,
@@ -50,7 +52,9 @@ const Table = (props) => {
 };
 const Process = ({ item: { name, processed, indexed, integrated } }) => (
     <tr>
-        <td>{name}</td>
+        <td>
+            <NestedNameField value={name} />
+        </td>
         <td align="right">{processed}</td>
         <td align="right">{indexed}</td>
         <td align="left" className="percent">
