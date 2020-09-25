@@ -111,7 +111,7 @@ class SinglePathWatcher:
             "processed": self.counts.imported,
             "indexed": self.counts.indexed,
             "integrated": self.counts.integrated,
-            "path": self.path.relative_to(relative_to),
+            "name": str(self.path.relative_to(relative_to)),
             "last_update": time.monotonic() - self.last_update
             if self.last_update
             else None,

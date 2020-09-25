@@ -18,19 +18,20 @@ class BackgroundMonitor(Thread):
             root: The root path to scan
             duty_cycle: The time, in seconds, to spend on/off scanning
         """
+        super().__init__()
         self.root = root
         self.duty_cycle = duty_cyle
-        self._stop = False
+        self._stop_thread = False
         # self.results: List[Dict] = []
         self._scanner = PathScanner(self.root)
 
     def run(self):
-        while not self._stop:
+        while not self._stop_thread:
             self._scanner.scan(time_limit=self.duty_cycle)
             time.sleep(self.duty_cycle)
 
     def stop(self, timeout: Optional[float] = None):
-        self._stop = True
+        self._stop_thread = True
         self.join(timeout)
 
     def results(self):

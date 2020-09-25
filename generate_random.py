@@ -41,7 +41,7 @@ TIME_PER_GRID = 20
 FILE_CREATE_RATE = 3
 IMAGE_COUNT = 100
 # INDEX_PROBABILITY = 0.2
-LATTICE_COUNT = 1.4
+LATTICE_COUNT = 0.7
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
