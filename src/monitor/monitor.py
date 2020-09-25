@@ -38,6 +38,43 @@ def count_folder(path: Path) -> Counts:
     return count_file_types(path.iterdir())
 
 
+def is_data_dir(files: List[str]):
+    """Identify a data directory by the files content"""
+    return any(
+        x.endswith("datablock.json") or x.endswith("imported.expt") for x in files
+    )
+
+
+def _merge_bool_into_generator(value: bool, generator: ScanGenerator) -> ScanGenerator:
+    """
+    Merge a boolean result with the first result from a ScanGenerator.
+
+    The ScanGenerator yields a sequence of True/False depending on whether
+    this round generated any changes. However, sometimes we want to "inject"
+    the first result by combining it with the results of a previous generator,
+    but we can't yield an extra value because we promise to do that based on
+    time limits rather than iterative convenience.
+
+    Args:
+        value:
+            If True, the first result yielded (or returned if an empty
+            generator) will be True. Otherwise, the first result from
+            the generator will be yielded.
+        generator:
+            The generator to delegate to for all iterations
+    """
+    try:
+        next_value = yield next(generator) or value
+    except StopIteration as result:
+        return value or result.value
+    # Pass the previous value and all next injected values.
+    try:
+        while True:
+            next_value = yield generator.send(next_value)
+    except StopIteration as result:
+        return result.value
+
+
 class SinglePathWatcher:
     """Watch a single stills process folder."""
 
@@ -79,43 +116,6 @@ class SinglePathWatcher:
             if self.last_update
             else None,
         }
-
-
-def is_data_dir(files: List[str]):
-    """Identify a data directory by the files content"""
-    return any(
-        x.endswith("datablock.json") or x.endswith("imported.expt") for x in files
-    )
-
-
-def _merge_bool_into_generator(value: bool, generator: ScanGenerator) -> ScanGenerator:
-    """
-    Merge a boolean result with the first result from a ScanGenerator.
-
-    The ScanGenerator yields a sequence of True/False depending on whether
-    this round generated any changes. However, sometimes we want to "inject"
-    the first result by combining it with the results of a previous generator,
-    but we can't yield an extra value because we promise to do that based on
-    time limits rather than iterative convenience.
-
-    Args:
-        value:
-            If True, the first result yielded (or returned if an empty
-            generator) will be True. Otherwise, the first result from
-            the generator will be yielded.
-        generator:
-            The generator to delegate to for all iterations
-    """
-    try:
-        next_value = yield next(generator) or value
-    except StopIteration as result:
-        return value or result.value
-    # Pass the previous value and all next injected values.
-    try:
-        while True:
-            next_value = yield generator.send(next_value)
-    except StopIteration as result:
-        return result.value
 
 
 class PathScanner:
