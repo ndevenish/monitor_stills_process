@@ -26,9 +26,11 @@
         "core-js": "^3.6.5"
     },
     "dependencies": {
+        "css-loader": "^4.3.0",
         "react": "^16.13.1",
         "react-dom": "^16.13.1",
-        "regenerator-runtime": "^0.13.7"
+        "regenerator-runtime": "^0.13.7",
+        "style-loader": "^1.2.1"
     },
     "prettier": {
         "tabWidth": 4

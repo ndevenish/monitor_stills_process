@@ -14,6 +14,11 @@ const rules = [
             },
         },
     },
+    {
+        test: /\.css$/,
+        exclude: /node_modules/,
+        use: ["style-loader", "css-loader"],
+    },
     // Wanted by
     // https://dev.to/siradji/react-without-create-react-app-start-building-your-react-project-like-a-professional-1hih
     // for css processing stuff. Leaving out for minimalism here.
