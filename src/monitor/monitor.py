@@ -46,7 +46,7 @@ class SinglePathWatcher:
     ):
         self.path = path
         self.counts = Counts(0, 0, 0)
-        self.last_update = time.monotonic()
+        self.last_update = time.monotonic() if initial_files else None
         self.last_checked = 0
         self.last_duration = 0
         self.counts = count_file_types([Path(x) for x in initial_files])
@@ -75,7 +75,9 @@ class SinglePathWatcher:
             "indexed": self.counts.indexed,
             "integrated": self.counts.integrated,
             "path": self.path.relative_to(relative_to),
-            "last_update": time.monotonic() - self.last_update,
+            "last_update": time.monotonic() - self.last_update
+            if self.last_update
+            else None,
         }
 
 
@@ -84,6 +86,36 @@ def is_data_dir(files: List[str]):
     return any(
         x.endswith("datablock.json") or x.endswith("imported.expt") for x in files
     )
+
+
+def _merge_bool_into_generator(value: bool, generator: ScanGenerator) -> ScanGenerator:
+    """
+    Merge a boolean result with the first result from a ScanGenerator.
+
+    The ScanGenerator yields a sequence of True/False depending on whether
+    this round generated any changes. However, sometimes we want to "inject"
+    the first result by combining it with the results of a previous generator,
+    but we can't yield an extra value because we promise to do that based on
+    time limits rather than iterative convenience.
+
+    Args:
+        value:
+            If True, the first result yielded (or returned if an empty
+            generator) will be True. Otherwise, the first result from
+            the generator will be yielded.
+        generator:
+            The generator to delegate to for all iterations
+    """
+    try:
+        next_value = yield next(generator) or value
+    except StopIteration as result:
+        return value or result.value
+    # Pass the previous value and all next injected values.
+    try:
+        while True:
+            next_value = yield generator.send(next_value)
+    except StopIteration as result:
+        return result.value
 
 
 class PathScanner:
@@ -131,12 +163,28 @@ class PathScanner:
             for dirname in list(dirs):
                 if (path / dirname) in known:
                     dirs.remove(dirname)
-            # Now check this folder
+                elif (path / dirname / "dials.process.log").is_file():
+                    # A _quick_ check is for this one file
+                    new_path = SinglePathWatcher(path / dirname, files)
+                    self.known_paths.append(new_path)
+                    dirs.remove(dirname)
+                    logger.debug(
+                        "Found \033[32mnew path %s\033[0m",
+                        new_path.path.relative_to(self.root),
+                    )
+                    change = True
+
+            # Now check this folder - might not have worked with quick check
             if is_data_dir(files):
                 new_path = SinglePathWatcher(path, files)
                 self.known_paths.append(new_path)
-                logger.debug("Found new data path %s with %s", path, new_path.counts)
+                logger.debug(
+                    "Found \033[32mnew (slow) path %s\033[0m with %s",
+                    path.relative_to(self.root),
+                    new_path.counts,
+                )
                 change = True
+
             # Check if we've taken too long and pause
             if time_limit and time.monotonic() - entry_time > time_limit:
                 logger.debug("Reached walking time limit of %s, pausing", time_limit)
@@ -153,26 +201,38 @@ class PathScanner:
         self._walker = None
         return change
 
-    def _scan(self, time_limit: float = None, start_time: float = 0) -> ScanGenerator:
-        """
-        Run scans over the known folders and look for new ones.
-
-        Args:
-            time_limit: Don't spend much longer than this searching at once
-        """
+    def _scan_existing_paths(
+        self, time_limit: float = None, start_time: float = 0
+    ) -> ScanGenerator:
         start_time = start_time or time.monotonic()
         entry_time = start_time
-
-        # Check for resume or new scan
-        paths_to_update = sorted(
-            self.known_paths, key=lambda x: start_time - x.last_update
-        )
-
         change = False
+        logger.debug("Starting single path updating")
+
+        # Get a sorted list of everything to check
+        def _sort_paths(path):
+            """Sort path objects, starting with those without an update"""
+            if not path.last_update:
+                return (False, path.path)
+            else:
+                return (start_time - path.last_update, path.path)
+
+        paths_to_update = sorted(self.known_paths, key=_sort_paths)
 
         # Run the scans until we run out of time
         for path in paths_to_update:
-            change = change or path.scan()
+            if path.scan():
+                change = True
+                logger.debug(
+                    "Updated %s to %s", path.path.relative_to(self.root), path.counts
+                )
+
+            if time_limit:
+                logger.debug(
+                    "Scanned %s, %.2f remaining",
+                    path.path.relative_to(self.root),
+                    time_limit - (time.monotonic() - entry_time),
+                )
             if time_limit and time.monotonic() - entry_time > time_limit:
                 logger.debug("Reached scan time limit during path update")
                 time_limit = yield change
@@ -185,21 +245,22 @@ class PathScanner:
                 time.monotonic() - start_time,
             )
 
-        path_scanner = self._scan_for_new_paths(
-            time_limit=time_limit, start_time=start_time
+        return change
+
+    def _scan(self, time_limit: float = None, start_time: float = 0) -> ScanGenerator:
+        """
+        Run scans over the known folders and look for new ones.
+
+        Args:
+            time_limit: Don't spend much longer than this searching at once
+        """
+        start_time = start_time or time.monotonic()
+
+        change = yield from self._scan_for_new_paths(time_limit, start_time)
+        change = yield from _merge_bool_into_generator(
+            change,
+            self._scan_existing_paths(time_limit, start_time),
         )
-        # If something changed here, then we need to mix the signal in
-        # with the first/only return value from the sub-generator
-        try:
-            if change:
-                # Whatever the path scanner finds, we know a change happened
-                next(path_scanner)
-                yield True
-        except StopIteration as result:
-            change = result.value
-        else:
-            # Now we solved the first change mixer, can just return everything
-            change = yield from path_scanner
 
         logger.debug("Scan completed in %.2f seconds.", time.monotonic() - start_time)
         return change
@@ -239,4 +300,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     scanner = PathScanner(options.path.resolve())
-    scanner.scan()
+    while True:
+        scanner.scan(time_limit=5)
+        logger.debug("Waiting before rescan")
+        time.sleep(5)
