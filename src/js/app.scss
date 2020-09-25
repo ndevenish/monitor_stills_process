@@ -1,0 +1,64 @@
+.percent {
+    color: gray;
+    font-size: 80%;
+}
+
+.pathContainer {
+    display: flex;
+}
+// .pathContainer span {
+//     padding: 2px;
+// }
+.pathSelector {
+    display: flex;
+    flex-direction: row-reverse;
+}
+.pathSelector span {
+    cursor: pointer;
+    // padding: 2px 2px 2px 0px;
+    /*   margin-top: 2px;
+    margin-bottom: 2px; */
+}
+// .pathSelector span:last-child {
+//     padding-left: 2px;
+// }
+
+$hover-color: lightblue;
+$hover-edge: deepskyblue;
+
+.pathSelector span:hover {
+    // padding: 0px;
+    // padding-left: 2px;
+    background-color: $hover-color;
+    // border-top: 2px solid $hover-edge;
+    // border-bottom: 2px solid $hover-edge;
+    // border-right: 2px solid $hover-edge;
+    border-radius: 0px 5px 5px 0px;
+    // box-sizing: border-box;
+}
+.pathSelector span:hover:last-child {
+    // padding: 0px;
+    // padding-left: 0px;
+    background-color: $hover-color;
+    // border-left: 2px solid $hover-edge;
+    border-radius: 5px;
+    // box-sizing: border-box;
+}
+.pathSelector span:hover ~ span {
+    // padding: 0px;
+    // padding-left: 2px;
+    background-color: $hover-color;
+    // border-top: 2px solid $hover-edge;
+    // border-bottom: 2px solid $hover-edge;
+    // box-sizing: border-box;
+}
+.pathSelector span:hover ~ span:last-child {
+    // padding: 0px;
+    // padding-left: 0px;
+    background-color: $hover-color;
+    // border-top: 2px solid $hover-edge;
+    // border-bottom: 2px solid $hover-edge;
+    // border-left: 2px solid $hover-edge;
+    border-radius: 5px 0% 0% 5px;
+    // box-sizing: border-box;
+}
