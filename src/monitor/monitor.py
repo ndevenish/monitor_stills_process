@@ -119,12 +119,14 @@ class PathScanner:
 
         # Track whether we updated anything this time
         change = False
+        checked_dircount = 0
 
         # Although os.walk might be slower, we use it here because we need
         # to check every folder for subfolders at least once
         for (basepath, dirs, files) in os.walk(self.root):
             path = Path(basepath)
             for dirname in list(dirs):
+                checked_dircount += 1
                 if (path / dirname) in known:
                     dirs.remove(dirname)
                 elif is_data_dir(files):
@@ -143,8 +145,9 @@ class PathScanner:
 
         # We're done with this walker
         logger.debug(
-            "Scan for new paths complete. Total time including waits: %s seconds",
+            "Scan for new paths complete. Total time including waits: %.2f seconds for %s paths",
             time.monotonic() - start_time,
+            checked_dircount,
         )
         self._walker = None
         return change
@@ -176,7 +179,7 @@ class PathScanner:
                 entry_time = time.monotonic()
 
         logger.debug(
-            "Single path updating done in %s",
+            "Single path updating done in %.2f seconds",
             time.monotonic() - start_time,
         )
 
@@ -196,7 +199,7 @@ class PathScanner:
             # Now we solved the first change mixer, can just return everything
             change = yield from path_scanner
 
-        logger.debug("Scan completed.")
+        logger.debug("Scan completed in %.2f seconds.", time.monotonic() - start_time)
         return change
 
     def scan(self, time_limit: float = None) -> bool:
