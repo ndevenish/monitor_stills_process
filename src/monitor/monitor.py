@@ -124,6 +124,9 @@ class PathScanner:
         self.known_paths: List[SinglePathWatcher] = []
         self._current_scan: Optional[ScanGenerator] = None
 
+    def to_dict(self):
+        return [x.to_dict(self.root) for x in self.known_paths[:]]
+
     def _scan_for_new_paths(
         self, time_limit: Optional[float] = None, start_time: Optional[float] = None
     ) -> ScanGenerator:
@@ -173,6 +176,8 @@ class PathScanner:
                         new_path.path.relative_to(self.root),
                     )
                     change = True
+                elif not (path / dirname / "dials.process.log").is_file():
+                    print(f"{path / dirname / 'dials.process.log'} is not a file")
 
             # Now check this folder - might not have worked with quick check
             if is_data_dir(files):
@@ -272,7 +277,7 @@ class PathScanner:
         point the next time it is called.
 
         Args:
-            time_limit: The length to time to stop scanning after
+            time_limit: The length to time, in seconds, to pause scanning after
 
         Returns:
             True if something changed this scan iteration
