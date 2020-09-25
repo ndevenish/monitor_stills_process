@@ -3,7 +3,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Iterable, Iterator, List, NamedTuple, Optional, Tuple, Union
+from typing import Generator, Iterable, List, NamedTuple, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -85,13 +85,13 @@ class PathScanner:
     def __init__(self, root: Path):
         self.root = root.resolve()
         self.known_paths: List[SinglePathWatcher] = []
-        self._walker: Optional[Iterator[Tuple[str, List[str], List[str]]]] = None
-        self._walker_start_time: Optional[float] = None
         self._updating_paths = None
         self._updating_paths_start_time: float = 0.0
         self._paths_to_update: Optional[List[SinglePathWatcher]] = None
 
-    def _scan_for_new_paths(self, time_limit: float = None):
+    def _scan_for_new_paths(
+        self, time_limit: Optional[float] = None, start_time: Optional[float] = None
+    ) -> Generator:
         """
         Walk the scan tree looking for new stills process paths.
 
@@ -100,15 +100,19 @@ class PathScanner:
                 The maximum time to spend searching. If scanning takes
                 longer than this, the search will be paused and resumed
                 next time the function is called.
+            start_time:
+                The initial start time to use, in case the routine doesn't
+                have all of the time_limit to initially run.
+
+        Returns:
+            yields until the routine is completed.
         """
 
-        start_time = time.monotonic()
+        start_time = start_time or time.monotonic()
+        # Keep track of how long we've gone without yield
+        entry_time = start_time
 
         known = [x.path for x in self.known_paths]
-        # Either make a new walker or resume the old one
-        if not self._walker:
-            self._walker = os.walk(self.root)
-            self._walker_start_time = start_time
 
         # Although os.walk might be slower, we use it here because we need
         # to check every folder for subfolders at least once
@@ -120,15 +124,17 @@ class PathScanner:
                 elif is_data_dir(files):
                     self.known_paths.append(SinglePathWatcher(path, files))
             # Check if we've taken too long and pause
-            if time_limit and time.monotonic() - start_time > time_limit:
+            if time_limit and time.monotonic() - entry_time > time_limit:
                 logger.debug("Reached walking time limit of %s, pausing", time_limit)
-                return False
+                time_limit = yield
+                entry_time = time.monotonic()
+
         # We're done with this walker
         logger.debug(
-            "New path complete. Total time: %s seconds", time.monotonic() - start_time
+            "New path complete. Total time including waits: %s seconds",
+            time.monotonic() - start_time,
         )
         self._walker = None
-        return True
 
     def scan(self, time_limit: float = None):
         """
@@ -156,9 +162,8 @@ class PathScanner:
             time.monotonic() - self._updating_paths_start_time,
         )
         # Now, scan for new paths in the time remaining
-        time_remaining = None
-        if time_limit:
-            time_remaining = time_limit - (time.monotonic() - start_time)
-        if not self._scan_for_new_paths(time_limit=time_remaining):
-            return
+        yield from self._scan_for_new_paths(
+            time_limit=time_limit, start_time=start_time
+        )
+
         logger.debug("Scan completed.")
