@@ -29,7 +29,7 @@ def _generate_protein():
 
 def _next_chip_name(previous: Optional[str] = None):
     """Generate the next name in a grid series"""
-    if previous is not None:
+    if previous:
         letter = previous[0]
         if letter == "z":
             letter = "a"
