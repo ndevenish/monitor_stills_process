@@ -62,3 +62,14 @@ $hover-edge: deepskyblue;
     border-radius: 5px 0% 0% 5px;
     // box-sizing: border-box;
 }
+
+thead th {
+    background: white;
+    position: sticky;
+    top: 0px;
+}
+tfoot th {
+    background: white;
+    position: sticky;
+    bottom: 0px;
+}
