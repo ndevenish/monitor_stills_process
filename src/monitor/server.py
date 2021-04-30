@@ -69,7 +69,7 @@ def run():
     logging.basicConfig(level=logging.DEBUG)
     app = create_app()
     try:
-        app.run()
+        app.run(host= '0.0.0.0')
     finally:
         logger.info("Shutting down background scanner")
         scanner.stop()
