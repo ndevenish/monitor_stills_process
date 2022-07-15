@@ -1,7 +1,7 @@
 import React from "react";
 import "./app.scss";
 
-const API_ENDPOINT = "http://ws358.diamond.ac.uk:5000/api";
+const API_ENDPOINT = "http://ws357.diamond.ac.uk:5000/api";
 
 const processPercent = (a, b) => ((100 * a) / b).toFixed(0);
 
